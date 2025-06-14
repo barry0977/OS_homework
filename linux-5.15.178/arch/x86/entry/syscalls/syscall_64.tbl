@@ -373,6 +373,7 @@
 449 common  write_kv         sys_write_kv
 450 common  read_kv          sys_read_kv
 451 common  ramfs_flush_fd   sys_ramfs_flush_fd
+452 common  configure_socket_fairness  sys_configure_socket_fairness
 
 #
 # Due to a historical design error, certain syscalls are numbered differently
