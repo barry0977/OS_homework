@@ -11,3 +11,26 @@
 
 ## 
 只需在内核运行socket_test
+
+# 7.2
+安装nccl 
+sudo apt install libnccl2 libnccl-dev
+
+编译
+nvcc nccl_test.c -o nccl_test \
+  -I/usr/local/cuda/include \
+  -I/usr/local/nccl/include \
+  -L/usr/local/cuda/lib64 \
+  -L/usr/local/nccl/lib \
+  -lnccl
+
+
+nvcc -o nccl_tcp_test nccl_tcp_test.cu -lnccl
+
+结果
+
+![正确性测试](1.png)
+
+![对比测试](2.png)
+
+
