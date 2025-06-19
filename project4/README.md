@@ -1,3 +1,3 @@
-### 虚拟环境gptfs
+进入虚拟环境gptfs
 
-### 运行test.sh
+sudo bash test.sh

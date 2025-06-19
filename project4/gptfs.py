@@ -28,15 +28,15 @@ class GPTfs(LoggingMixIn, Operations):
         now = int(time.time())
         parts = path.strip("/").split("/")
         if path == "/":
-            return dict(st_mode=(0o40755), st_nlink=2)
+            return dict(st_mode=(0o40755), st_nlink=2,st_ctime=now, st_mtime=now, st_atime=now)
         elif len(parts) == 1:
             if parts[0] in self.sessions:
-                return dict(st_mode=(0o40755), st_nlink=2)
+                return dict(st_mode=(0o40755), st_nlink=2,st_ctime=now, st_mtime=now, st_atime=now)
         elif len(parts) == 2:
             session, file = parts
             if session in self.sessions and file in ("input", "output", "error"):
                 content = self.sessions[session][file]
-                return dict(st_mode=(0o100644), st_nlink=1, st_size=len(content))
+                return dict(st_mode=(0o100644), st_nlink=1, st_size=len(content),st_ctime=now, st_mtime=now, st_atime=now)
         raise OSError(errno.ENOENT, "")
 
     def mkdir(self, path, mode):
@@ -64,12 +64,10 @@ class GPTfs(LoggingMixIn, Operations):
             session, file = parts
             self._ensure_session_files(session)
             if file == "input":
-                # 写入 prompt
                 self.sessions[session]["input"] = data
-                # 模拟 GPT 生成回复
                 try:
                     prompt = data.decode()
-                    fake_response = f"模拟回答：你说的是『{prompt.strip()}』。".encode()
+                    fake_response = f"模拟回答：你说的是'{prompt.strip()}'。\n".encode()
                     self.sessions[session]["output"] = fake_response
                     self.sessions[session]["error"] = b''
                 except Exception as e:
@@ -80,6 +78,7 @@ class GPTfs(LoggingMixIn, Operations):
                 raise OSError(errno.EPERM, "只允许写 input 文件")
         raise OSError(errno.ENOENT, "")
 
+    #使文件可写，可以进行echo >
     def truncate(self, path, length):
         parts = path.strip("/").split("/")
         if len(parts) == 2:

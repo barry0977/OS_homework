@@ -6,7 +6,19 @@ sleep 1
 
 SESSION="$MNT/session1"
 mkdir "$SESSION"
+ls "$MNT"
+ls "$SESSION"
+ls -l "$SESSION"
+
 echo "你好gpt" > "$SESSION/input"
+sleep 5
+
+echo "[输出]:"
+cat "$SESSION/output"
+echo "[错误]:"
+cat "$SESSION/error"
+
+echo "新的问题" > "$SESSION/input"
 sleep 5
 
 echo "[输出]:"

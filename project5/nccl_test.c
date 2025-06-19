@@ -32,72 +32,6 @@ double get_time() {
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec + ts.tv_nsec * 1e-9;
 }
-/*
-* @brief 使用NCCL执行多GPU数据广播操作
-* @param data  需要广播的数据缓冲区指针
-* @param count  数据元素的个数
-* @param root  广播发送方的GPU ID
-* @param comm  NCCL通信器
-* @return ncclSuccess表示成功，其他错误码请参照NCCL官方文档
-*/
-ncclResult_t nccl_broadcast_data(void* data, size_t count, int root, ncclComm_t comm){
-    cudaStream_t stream;
-    cudaError_t cuda_status = cudaStreamCreate(&stream);
-
-    ncclResult_t res = ncclBroadcast(
-        data,
-        data,
-        count,
-        ncclFloat,
-        root,
-        comm,
-        stream
-    );
-
-    // 同步，确保广播操作完成
-    if (res == ncclSuccess) {
-        cuda_status = cudaStreamSynchronize(stream);
-        if (cuda_status != cudaSuccess) {
-            res = ncclSystemError;
-        }
-    }
-
-    cudaStreamDestroy(stream);
-    return res;
-}
-
-/*
- * @brief 使用 NCCL 执行 AllReduce 操作，将多个 GPU 的数据规约（如求和）并同步写入每个 GPU 的缓冲区。
- * @param sendbuf  指向 GPU 上要参与规约的输入数据
- * @param recvbuf  指向 GPU 上接受规约结果的输出缓冲区
- * @param count    数据元素数量（例如 float 的个数）
- * @param comm     当前 GPU 的 NCCL 通信器
- * @return ncclSuccess 表示成功，其它返回值表示 NCCL 错误
- */
-ncclResult_t nccl_allreduce_data(const void* sendbuf, void* recvbuf, size_t count, ncclComm_t comm) {
-    cudaStream_t stream;
-    cudaError_t cuda_status = cudaStreamCreate(&stream);
-
-    ncclResult_t res = ncclAllReduce(
-        sendbuf,
-        recvbuf,
-        count,
-        ncclFloat,
-        ncclSum,
-        comm,
-        stream
-    );
-
-    if (res == ncclSuccess) {
-        cuda_status = cudaStreamSynchronize(stream);
-        if (cuda_status != cudaSuccess) {
-            res = ncclSystemError;
-        }
-    }
-
-    cudaStreamDestroy(stream);
-    return res;
-}
 
 int main(int argc, char* argv[]) {
     int device_count = 0;
@@ -115,25 +49,24 @@ int main(int argc, char* argv[]) {
 
     int devices[NUM_GPUS] = {0, 1};
 
-    // NCCL 初始化
+    //NCCL 初始化
     NCCLCHECK(ncclCommInitAll(comms, NUM_GPUS, devices));
 
-    // 为每个GPU分配缓冲
+    //为每个GPU分配缓冲
     for (int i = 0; i < NUM_GPUS; ++i) {
         CUDACHECK(cudaSetDevice(devices[i]));
         CUDACHECK(cudaMalloc((void**)&d_send[i], COUNT * sizeof(float)));
         CUDACHECK(cudaMalloc((void**)&d_recv[i], COUNT * sizeof(float)));
     }
 
-    // 初始化 root GPU 数据
+    //初始化 root GPU 数据
     for (size_t i = 0; i < COUNT; ++i) h_buffer[i] = (float)i;
     CUDACHECK(cudaSetDevice(devices[0]));
     CUDACHECK(cudaMemcpy(d_send[0], h_buffer, COUNT * sizeof(float), cudaMemcpyHostToDevice));
 
-    // === NCCL Broadcast 测试 ===
     printf("===== NCCL Broadcast 测试 =====\n");
     double start = get_time();
-    // 每个 GPU 创建 stream
+    //每个 GPU 创建 stream
     for (int i = 0; i < NUM_GPUS; ++i) {
         CUDACHECK(cudaSetDevice(devices[i]));
         CUDACHECK(cudaStreamCreate(&streams[i]));
@@ -154,7 +87,7 @@ int main(int argc, char* argv[]) {
     }
     NCCLCHECK(ncclGroupEnd());
 
-    // 等待所有 stream 完成
+    //cuda间同步
     for (int i = 0; i < NUM_GPUS; ++i) {
         CUDACHECK(cudaSetDevice(devices[i]));
         CUDACHECK(cudaStreamSynchronize(streams[i]));
@@ -165,7 +98,6 @@ int main(int argc, char* argv[]) {
     double gb = (COUNT * sizeof(float)) / 1e9;
     printf("广播完成，耗时 %.4f 秒，带宽约 %.2f GB/s\n", duration, gb / duration);
 
-    // 检查每个 GPU 是否一致
     for (int i = 0; i < NUM_GPUS; ++i) {
         float* h_check = (float*)malloc(COUNT * sizeof(float));
         CUDACHECK(cudaMemcpy(h_check, d_send[i], COUNT * sizeof(float), cudaMemcpyDeviceToHost));
@@ -181,7 +113,6 @@ int main(int argc, char* argv[]) {
         free(h_check);
     }
 
-    // === NCCL AllReduce 测试 ===
     printf("\n===== NCCL AllReduce 测试 =====\n");
     for (int i = 0; i < NUM_GPUS; ++i) {
         float val = (float)(i + 1);  //gpu 0: 1.0, gpu 1: 2.0
@@ -211,7 +142,6 @@ int main(int argc, char* argv[]) {
         ));
     }
     NCCLCHECK(ncclGroupEnd());
-    // 等待同步
     for (int i = 0; i < NUM_GPUS; ++i) {
         CUDACHECK(cudaSetDevice(devices[i]));
         CUDACHECK(cudaStreamSynchronize(streams[i]));
@@ -244,7 +174,6 @@ int main(int argc, char* argv[]) {
         CUDACHECK(cudaStreamDestroy(streams[i]));
     }
 
-    // 清理
     for (int i = 0; i < NUM_GPUS; ++i) {
         CUDACHECK(cudaFree(d_send[i]));
         CUDACHECK(cudaFree(d_recv[i]));
