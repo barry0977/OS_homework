@@ -1,0 +1,1 @@
+cmd_/home/czx/kvm/exercise/ch2-privileged/ch2_1/modules.order := {   echo /home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.ko; :; } | awk '!x[$$0]++' - > /home/czx/kvm/exercise/ch2-privileged/ch2_1/modules.order

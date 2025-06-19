@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include "ramfs_flush.h"
 
 #define RAMFS_FILE "/mnt/ramfs/testfile_single.dat"
 #define FILE_SIZE_MB 64

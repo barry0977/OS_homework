@@ -1,0 +1,1 @@
+cmd_/home/czx/kvm/exercise/ch2-privileged/ch2_1/Module.symvers := sed 's/\.ko$$/\.o/' /home/czx/kvm/exercise/ch2-privileged/ch2_1/modules.order | scripts/mod/modpost    -o /home/czx/kvm/exercise/ch2-privileged/ch2_1/Module.symvers -e -i Module.symvers   -T -

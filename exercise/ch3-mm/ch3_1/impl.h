@@ -20,17 +20,17 @@ void* mmap_remap(void *addr, size_t size) {
     void* new_addr = mmap(NULL,size,PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);//不需要文件映射，fd 设置为 -1，表示匿名映射
     if (new_addr == MAP_FAILED) {
         perror("mmap_remap failed");
-        return NULL; // 映射失败，返回 NULL
+        return NULL;
     }
     if (addr != NULL) {
-         memcpy(new_addr, addr, size);  // 将原有映射的内容复制到新的映射地址
-        // 如果 addr 不为 NULL，解除原有映射
+         memcpy(new_addr, addr, size);  //将原有映射的内容复制到新的映射地址
+        //解除原有映射
         if (munmap(addr, size) == -1) {
             perror("munmap failed");
-            return NULL; // 解除映射失败，返回 NULL
+            return NULL; //解除映射失败，返回 NULL
         }
     }
-    return new_addr; // 返回新的映射地址
+    return new_addr; //返回新的映射地址
 }
 
 /**
@@ -63,7 +63,7 @@ int file_mmap_write(const char* filename, size_t offset, char* content) {
         return -1;
     }
 
-    if ((size_t)st.st_size < required_size) {// 如果文件大小小于需要的大小，则需要扩展文件
+    if ((size_t)st.st_size < required_size) {//如果文件大小小于需要的大小，则需要扩展文件
         if (ftruncate(fd, required_size) == -1) {
             perror("ftruncate");
             close(fd);

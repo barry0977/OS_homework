@@ -1,0 +1,1 @@
+cmd_/home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.o := ld -m elf_x86_64 -z noexecstack --no-warn-rwx-segments   -r -o /home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.o /home/czx/kvm/exercise/ch2-privileged/ch2_1/test3-kernel-module.o

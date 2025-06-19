@@ -1,0 +1,1 @@
+cmd_/home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T scripts/module.lds -o /home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.ko /home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.o /home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.mod.o;  true

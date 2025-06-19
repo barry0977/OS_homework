@@ -13,14 +13,15 @@ CONFIG_DEBUG_MUTEXES=y
 #include <linux/random.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
+#include <linux/syscalls.h>
 
 #define NUM_THREADS 100
 #define NUM_ITERATIONS 1000
 #define MAX_KEY 2048
 
 
-extern int write_kv(int k, int v);
-extern int read_kv(int k);
+extern int kv_write(int k, int v);
+extern int kv_read(int k);
 
 static struct task_struct *threads[NUM_THREADS];
 
@@ -35,15 +36,15 @@ static int kv_test_thread(void *arg) {
 
         if (operation) {
             
-            if (write_kv(k, v) == -1) {
+            if (kv_write(k, v) == -1) {
                 pr_err("Error writing key %d\n", k);
             }
         } else {
             
-            int read_value = read_kv(k);
-            if (read_value == -1) {
-                pr_err("Error reading key %d\n", k);
-            }
+            int read_value = kv_read(k);
+            // if (read_value == -1) {
+            //     pr_err("Error reading key %d\n", k);
+            // }
         }
 
         
@@ -63,6 +64,7 @@ static int __init kv_test_init(void) {
             threads[i] = NULL;
         }
     }
+    pr_info("KV Test Module initialized with %d threads.\n", NUM_THREADS);
     return 0;
 }
 

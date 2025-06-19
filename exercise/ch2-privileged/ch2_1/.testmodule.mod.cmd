@@ -1,0 +1,1 @@
+cmd_/home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.mod := { echo  /home/czx/kvm/exercise/ch2-privileged/ch2_1/test3-kernel-module.o;  echo; } > /home/czx/kvm/exercise/ch2-privileged/ch2_1/testmodule.mod
